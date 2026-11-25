@@ -12,6 +12,7 @@ import android.app.Activity;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.CheckBoxPreference;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
@@ -26,16 +27,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
+import android.widget.Toast;
 
 import com.limelight.LimeLog;
 import com.limelight.PcView;
 import com.limelight.R;
+import com.limelight.aero.AeroPalette;
+import com.limelight.aero.AeroTheme;
 import com.limelight.binding.video.MediaCodecHelper;
 import com.limelight.utils.Dialog;
 import com.limelight.utils.UiHelper;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Locale;
 
 public class StreamSettings extends Activity {
     private PreferenceConfiguration previousPrefs;
@@ -267,7 +272,80 @@ public class StreamSettings extends Activity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View view = super.onCreateView(inflater, container, savedInstanceState);
             UiHelper.applyStatusBarPadding(view);
+            AeroTheme.stylePane(view);
             return view;
+        }
+
+        // Applies Frutiger Aero changes the moment they are made, without leaving Settings
+        private final SharedPreferences.OnSharedPreferenceChangeListener aeroListener =
+                new SharedPreferences.OnSharedPreferenceChangeListener() {
+                    @Override
+                    public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+                        Activity activity = getActivity();
+                        if (activity != null && AeroPalette.isAeroPreference(key)) {
+                            AeroTheme.apply(activity);
+                            AeroTheme.stylePane(getView());
+                        }
+                    }
+                };
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            PreferenceManager.getDefaultSharedPreferences(getActivity())
+                    .registerOnSharedPreferenceChangeListener(aeroListener);
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            PreferenceManager.getDefaultSharedPreferences(getActivity())
+                    .unregisterOnSharedPreferenceChangeListener(aeroListener);
+        }
+
+        private void setupAeroPreferences() {
+            final ListPreference preset = (ListPreference) findPreference(AeroPalette.PREF_PRESET);
+            final ListPreference swatch = (ListPreference) findPreference("list_aero_swatch");
+            final EditTextPreference hex = (EditTextPreference) findPreference(AeroPalette.PREF_COLOR);
+            if (preset == null || swatch == null || hex == null) {
+                return;
+            }
+
+            hex.setSummary(hex.getText());
+
+            // Picking a ready-made color fills in the hex field and switches to the Custom preset
+            swatch.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    String value = String.valueOf(newValue);
+                    preset.setValue(AeroPalette.PRESET_CUSTOM);
+                    hex.setText(value);
+                    hex.setSummary(value);
+                    // The swatch list itself is not persisted
+                    return false;
+                }
+            });
+
+            // Typing a hex color is validated and normalized before it is saved
+            hex.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    String value = String.valueOf(newValue).trim();
+                    if (!value.startsWith("#")) {
+                        value = "#" + value;
+                    }
+                    if (!AeroPalette.isValidColor(value)) {
+                        Toast.makeText(getActivity(), R.string.toast_aero_color_invalid, Toast.LENGTH_LONG).show();
+                        return false;
+                    }
+                    value = value.toLowerCase(Locale.ROOT);
+                    preset.setValue(AeroPalette.PRESET_CUSTOM);
+                    hex.setText(value);
+                    hex.setSummary(value);
+                    // We stored the normalized value ourselves
+                    return false;
+                }
+            });
         }
 
         @Override
@@ -276,6 +354,8 @@ public class StreamSettings extends Activity {
 
             addPreferencesFromResource(R.xml.preferences);
             PreferenceScreen screen = getPreferenceScreen();
+
+            setupAeroPreferences();
 
             // hide on-screen controls category on non touch screen devices
             if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {

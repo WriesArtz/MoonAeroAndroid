@@ -18,6 +18,7 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 
 import com.limelight.Game;
+import com.limelight.aero.AeroTheme;
 import com.limelight.R;
 import com.limelight.nvstream.http.ComputerDetails;
 import com.limelight.preferences.PreferenceConfiguration;
@@ -170,6 +171,9 @@ public class UiHelper {
 
             activity.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         }
+
+        // Frutiger Aero theme (no-op when disabled in Settings)
+        AeroTheme.apply(activity);
     }
 
     public static void showDecoderCrashDialog(Activity activity) {

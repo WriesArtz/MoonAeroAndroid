@@ -1,5 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Frutiger Aero theme -->
+    <string-array name="aero_preset_names">
+        <item>@string/aero_preset_aqua</item>
+        <item>@string/aero_preset_bliss</item>
+        <item>@string/aero_preset_sunset</item>
+        <item>@string/aero_preset_aurora</item>
+        <item>@string/aero_preset_custom</item>
+    </string-array>
+
+    <!-- Keep this in sync with AeroPalette -->
+    <string-array name="aero_preset_values" translatable="false">
+        <item>aqua</item>
+        <item>bliss</item>
+        <item>sunset</item>
+        <item>aurora</item>
+        <item>custom</item>
+    </string-array>
+
+    <string-array name="aero_swatch_names">
+        <item>@string/aero_swatch_ocean</item>
+        <item>@string/aero_swatch_teal</item>
+        <item>@string/aero_swatch_emerald</item>
+        <item>@string/aero_swatch_lime</item>
+        <item>@string/aero_swatch_amber</item>
+        <item>@string/aero_swatch_orange</item>
+        <item>@string/aero_swatch_pink</item>
+        <item>@string/aero_swatch_violet</item>
+        <item>@string/aero_swatch_indigo</item>
+        <item>@string/aero_swatch_slate</item>
+    </string-array>
+
+    <string-array name="aero_swatch_values" translatable="false">
+        <item>#1c9bdc</item>
+        <item>#00b7c3</item>
+        <item>#2ecc71</item>
+        <item>#9ccc1a</item>
+        <item>#ffb300</item>
+        <item>#ff6f3c</item>
+        <item>#ec407a</item>
+        <item>#9c5cf0</item>
+        <item>#4f6df5</item>
+        <item>#8d99ae</item>
+    </string-array>
+
     <string-array name="resolution_names">
         <item>@string/resolution_360p</item>
         <item>@string/resolution_480p</item>

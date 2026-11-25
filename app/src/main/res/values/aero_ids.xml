@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Frutiger Aero theme: view ids and tag keys (see com.limelight.aero.AeroTheme) -->
+    <item name="aero_bubble_view" type="id" />
+    <item name="aero_style_signature" type="id" />
+    <item name="aero_original_padding" type="id" />
+    <item name="aero_original_background" type="id" />
+    <item name="aero_original_selector" type="id" />
+</resources>

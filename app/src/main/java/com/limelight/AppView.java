@@ -20,6 +20,7 @@ import com.limelight.utils.Dialog;
 import com.limelight.utils.ServerHelper;
 import com.limelight.utils.ShortcutHelper;
 import com.limelight.utils.SpinnerDialog;
+import com.limelight.aero.AeroTheme;
 import com.limelight.utils.UiHelper;
 
 import android.app.Activity;
@@ -375,6 +376,11 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         // Display a decoder crash notification if we've returned after a crash
         UiHelper.showDecoderCrashDialog(this);
+
+        // Pick up Frutiger Aero changes made in Settings
+        if (AeroTheme.apply(this) && appGridAdapter != null) {
+            appGridAdapter.notifyDataSetChanged();
+        }
 
         inForeground = true;
         startComputerUpdates();

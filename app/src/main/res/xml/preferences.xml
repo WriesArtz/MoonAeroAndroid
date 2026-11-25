@@ -224,6 +224,56 @@
             android:title="@string/title_checkbox_small_icon_mode"
             android:summary="@string/summary_checkbox_small_icon_mode" />
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/category_aero_settings"
+        android:key="category_aero_settings">
+        <CheckBoxPreference
+            android:key="checkbox_aero_enabled"
+            android:title="@string/title_checkbox_aero_enabled"
+            android:summary="@string/summary_checkbox_aero_enabled"
+            android:defaultValue="true" />
+        <ListPreference
+            android:key="list_aero_preset"
+            android:dependency="checkbox_aero_enabled"
+            android:title="@string/title_aero_preset"
+            android:summary="%s"
+            android:entries="@array/aero_preset_names"
+            android:entryValues="@array/aero_preset_values"
+            android:defaultValue="aqua" />
+        <ListPreference
+            android:key="list_aero_swatch"
+            android:dependency="checkbox_aero_enabled"
+            android:persistent="false"
+            android:title="@string/title_aero_swatch"
+            android:summary="@string/summary_aero_swatch"
+            android:entries="@array/aero_swatch_names"
+            android:entryValues="@array/aero_swatch_values" />
+        <EditTextPreference
+            android:key="edit_aero_color"
+            android:dependency="checkbox_aero_enabled"
+            android:title="@string/title_aero_color"
+            android:dialogTitle="@string/dialog_title_aero_color"
+            android:singleLine="true"
+            android:maxLength="7"
+            android:defaultValue="#1c9bdc" />
+        <com.limelight.preferences.SeekBarPreference
+            android:key="seekbar_aero_glass"
+            android:dependency="checkbox_aero_enabled"
+            android:dialogMessage="@string/summary_aero_glass"
+            seekbar:min="10"
+            seekbar:step="5"
+            seekbar:keyStep="5"
+            android:max="90"
+            android:defaultValue="55"
+            android:summary="@string/summary_aero_glass"
+            android:text="@string/suffix_aero_glass"
+            android:title="@string/title_aero_glass" />
+        <CheckBoxPreference
+            android:key="checkbox_aero_bubbles"
+            android:dependency="checkbox_aero_enabled"
+            android:title="@string/title_checkbox_aero_bubbles"
+            android:summary="@string/summary_checkbox_aero_bubbles"
+            android:defaultValue="true" />
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/category_advanced_settings"
         android:key="category_advanced_settings">
         <CheckBoxPreference

@@ -303,4 +303,35 @@
     <string name="analogscroll_none">None (both sticks move the mouse)</string>
     <string name="analogscroll_right">Right analog stick</string>
     <string name="analogscroll_left">Left analog stick</string>
+
+    <!-- Frutiger Aero theme -->
+    <string name="category_aero_settings">Appearance (Frutiger Aero)</string>
+    <string name="title_checkbox_aero_enabled">Frutiger Aero theme</string>
+    <string name="summary_checkbox_aero_enabled">Glossy glass, aqua gradients and floating bubbles. Turn off for the classic Moonlight look</string>
+    <string name="title_aero_preset">Color preset</string>
+    <string name="aero_preset_aqua">Aqua</string>
+    <string name="aero_preset_bliss">Bliss</string>
+    <string name="aero_preset_sunset">Sunset</string>
+    <string name="aero_preset_aurora">Aurora</string>
+    <string name="aero_preset_custom">Custom</string>
+    <string name="title_aero_swatch">Pick a custom color</string>
+    <string name="summary_aero_swatch">Choose a ready-made color. This switches the preset to Custom</string>
+    <string name="aero_swatch_ocean">Ocean blue</string>
+    <string name="aero_swatch_teal">Teal</string>
+    <string name="aero_swatch_emerald">Emerald</string>
+    <string name="aero_swatch_lime">Lime</string>
+    <string name="aero_swatch_amber">Amber</string>
+    <string name="aero_swatch_orange">Orange</string>
+    <string name="aero_swatch_pink">Pink</string>
+    <string name="aero_swatch_violet">Violet</string>
+    <string name="aero_swatch_indigo">Indigo</string>
+    <string name="aero_swatch_slate">Slate</string>
+    <string name="title_aero_color">Custom color (hex)</string>
+    <string name="dialog_title_aero_color">Custom color</string>
+    <string name="toast_aero_color_invalid">Enter a color like #1c9bdc: a # followed by six hex digits</string>
+    <string name="title_aero_glass">Glass opacity</string>
+    <string name="summary_aero_glass">How solid the glass panels look. Lower values are clearer</string>
+    <string name="suffix_aero_glass">%</string>
+    <string name="title_checkbox_aero_bubbles">Floating bubbles</string>
+    <string name="summary_checkbox_aero_bubbles">Animate soap bubbles in the background. They stay still if animations are off in system settings</string>
 </resources>

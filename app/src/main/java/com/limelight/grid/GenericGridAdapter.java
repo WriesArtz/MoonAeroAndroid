@@ -10,6 +10,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.limelight.R;
+import com.limelight.aero.AeroTheme;
 
 import java.util.ArrayList;
 
@@ -66,6 +67,8 @@ public abstract class GenericGridAdapter<T> extends BaseAdapter {
         ImageView overlayView = convertView.findViewById(R.id.grid_overlay);
         TextView txtView = convertView.findViewById(R.id.grid_text);
         ProgressBar prgView = convertView.findViewById(R.id.grid_spinner);
+
+        AeroTheme.styleTile(convertView, viewGroup, layoutId == R.layout.pc_grid_item);
 
         populateView(convertView, imgView, prgView, txtView, overlayView, itemList.get(i));
 
