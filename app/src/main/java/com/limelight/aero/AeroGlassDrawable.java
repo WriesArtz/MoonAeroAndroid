@@ -1,64 +1,144 @@
 package com.limelight.aero;
 
+import android.animation.ValueAnimator;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
+import android.view.View;
+import android.view.animation.OvershootInterpolator;
 
 /**
- * A glossy Frutiger Aero glass surface: tinted translucent body, bright gloss
- * highlight over the top half, warm glow along the bottom, a thin white rim and
- * a soft shadow. Port of AeroGlass.qml from the desktop theme.
+ * A "liquid glass" Frutiger Aero surface.
  *
- * Everything is drawn inside the drawable's bounds (shadow and focus ring live
- * in the {@code inset} margin) so it survives parents that clip their children.
+ *  - frosted: shows the blurred background (sky or wallpaper) that lies behind the view,
+ *    clipped to a generously rounded shape
+ *  - a light tint, a soft sheen that fades to nothing (no hard gloss band) and an inner glow
+ *  - a specular rim, brightest at the top-left and bottom-right and faint along the sides
+ *  - diffuse shadow and a soft glow instead of a hard focus ring
+ *  - springy motion: it grows when hovered or selected and squashes when pressed, overshooting a
+ *    little before settling, driven by the view state (so it works with touch, TV remote and mouse)
+ *
+ * Everything is drawn inside the drawable's bounds (shadow, glow and the spring's overshoot live in
+ * the {@code inset} margin) so it survives parents that clip their children.
  */
 final class AeroGlassDrawable extends Drawable {
+    private static final float REST = 1f;
+    private static final float HOVER = 1.035f;
+    private static final float PRESS = 0.955f;
+
     private final int tint;
     private final float density;     // 0..1, how opaque the glass is
+    private final boolean blur;      // show the blurred backdrop
     private final float dp;          // pixels per dp
     private final float radiusDp;    // corner radius; ignored for orbs
     private final float insetDp;     // margin kept free around the body
     private final boolean orb;
     private final boolean shadow;
-    private final boolean hovered;
-    private final boolean pressed;
-    private final boolean focused;
+    private final boolean springy;
+
+    private boolean hovered;
+    private boolean pressed;
+    private boolean focused;
+    private float spring = REST;
+    private float glowAmount = 0f;   // 0..1, hover / focus glow
+    private ValueAnimator animator;
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint bitmapPaint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG);
     private final RectF body = new RectF();
-    private final RectF glow = new RectF();
-    private final RectF gloss = new RectF();
     private final RectF tmp = new RectF();
+    private final Rect srcRect = new Rect();
+    private final Path clip = new Path();
+    private final int[] location = new int[2];
 
-    private Shader bodyShader;
-    private Shader glowShader;
-    private Shader glossShader;
+    private Shader tintShader;
+    private Shader sheenShader;
+    private Shader rimShader;
     private float radius;
-    private float innerRadius;
 
-    AeroGlassDrawable(int tint, float density, float dp, float radiusDp, float insetDp,
-                      boolean orb, boolean shadow, boolean hovered, boolean pressed, boolean focused) {
+    AeroGlassDrawable(int tint, float density, boolean blur, float dp, float radiusDp, float insetDp,
+                      boolean orb, boolean shadow, boolean springy) {
         this.tint = tint;
         this.density = density;
+        this.blur = blur;
         this.dp = dp;
         this.radiusDp = radiusDp;
         this.insetDp = insetDp;
         this.orb = orb;
         this.shadow = shadow;
-        this.hovered = hovered;
-        this.pressed = pressed;
-        this.focused = focused;
+        this.springy = springy;
     }
 
+    /** Opacity of the tint layer. Less is needed when the blurred backdrop already frosts the glass. */
     private float strength() {
-        return 0.25f + 0.55f * density;
+        return blur ? 0.10f + 0.40f * density : 0.22f + 0.55f * density;
     }
+
+    // ------------------------------------------------------------------ state / spring
+
+    @Override
+    public boolean isStateful() {
+        return true;
+    }
+
+    @Override
+    protected boolean onStateChange(int[] state) {
+        boolean newPressed = false;
+        boolean newHovered = false;
+        boolean newFocused = false;
+        for (int s : state) {
+            if (s == android.R.attr.state_pressed) {
+                newPressed = true;
+            }
+            else if (s == android.R.attr.state_hovered) {
+                newHovered = true;
+            }
+            else if (s == android.R.attr.state_selected || s == android.R.attr.state_focused) {
+                newFocused = true;
+            }
+        }
+        if (newPressed == pressed && newHovered == hovered && newFocused == focused) {
+            return false;
+        }
+        pressed = newPressed;
+        hovered = newHovered;
+        focused = newFocused;
+
+        final float targetSpring = !springy ? REST : (pressed ? PRESS : ((hovered || focused) ? HOVER : REST));
+        final float targetGlow = (focused || pressed) ? 1f : (hovered ? 0.55f : 0f);
+        final float fromSpring = spring;
+        final float fromGlow = glowAmount;
+        if (animator != null) {
+            animator.cancel();
+        }
+        animator = ValueAnimator.ofFloat(0f, 1f);
+        // Pressing is quick and tight; letting go is slow and bouncy (that is the "liquid" feel)
+        animator.setDuration(pressed ? 110 : 520);
+        animator.setInterpolator(pressed ? new android.view.animation.DecelerateInterpolator()
+                                         : new OvershootInterpolator(2.2f));
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator a) {
+                float t = (Float) a.getAnimatedValue();
+                spring = fromSpring + (targetSpring - fromSpring) * t;
+                glowAmount = Math.max(0f, Math.min(1f, fromGlow + (targetGlow - fromGlow) * Math.min(1f, t)));
+                invalidateSelf();
+            }
+        });
+        animator.start();
+        invalidateSelf();
+        return true;
+    }
+
+    // ------------------------------------------------------------------ geometry
 
     @Override
     protected void onBoundsChange(Rect bounds) {
@@ -68,104 +148,146 @@ final class AeroGlassDrawable extends Drawable {
             body.setEmpty();
             return;
         }
-
         radius = orb ? Math.min(body.width(), body.height()) / 2f
                      : Math.min(radiusDp * dp, Math.min(body.width(), body.height()) / 2f);
-        innerRadius = Math.max(0f, radius - 2f * dp);
 
         float a = strength();
-        float hover = hovered ? 0.10f : 0f;
-        bodyShader = new LinearGradient(0, body.top, 0, body.bottom,
+        tintShader = new LinearGradient(0, body.top, 0, body.bottom,
                 new int[] {
-                        AeroColors.withAlpha(AeroColors.lighter(tint, 1.15f), a + hover),
-                        AeroColors.withAlpha(tint, a + hover * 0.6f),
-                        AeroColors.withAlpha(AeroColors.darker(tint, 1.45f), Math.min(1f, a + 0.12f)),
+                        AeroColors.withAlpha(AeroColors.lighter(tint, 1.25f), a),
+                        AeroColors.withAlpha(tint, a * 0.85f),
+                        AeroColors.withAlpha(AeroColors.darker(tint, 1.35f), Math.min(1f, a * 1.05f + 0.04f)),
                 },
-                new float[] {0f, 0.5f, 1f}, Shader.TileMode.CLAMP);
+                new float[] {0f, 0.55f, 1f}, Shader.TileMode.CLAMP);
 
-        // Warm glow along the bottom edge (bottom 32%)
-        glow.set(body.left + 2f * dp, body.bottom - body.height() * 0.32f - 2f * dp,
-                body.right - 2f * dp, body.bottom - 2f * dp);
-        glowShader = new LinearGradient(0, glow.top, 0, glow.bottom,
-                AeroColors.withAlpha(AeroColors.lighter(tint, 1.4f), 0f),
-                AeroColors.withAlpha(AeroColors.lighter(tint, 1.4f), 0.28f),
-                Shader.TileMode.CLAMP);
+        // Sheen: fades smoothly to nothing, so there is no visible band edge
+        sheenShader = new LinearGradient(0, body.top, 0, body.bottom,
+                new int[] {0x33ffffff, 0x00ffffff, 0x00ffffff,
+                           AeroColors.withAlpha(AeroColors.lighter(tint, 1.6f), 0.14f)},
+                new float[] {0f, 0.45f, 0.85f, 1f}, Shader.TileMode.CLAMP);
 
-        // Gloss highlight over the top half
-        gloss.set(body.left + 2f * dp, body.top + 2f * dp,
-                body.right - 2f * dp, body.top + body.height() * 0.5f);
-        glossShader = new LinearGradient(0, gloss.top, 0, gloss.bottom,
-                0x8cffffff,   // white at 55%
-                0x0fffffff,   // white at 6%
-                Shader.TileMode.CLAMP);
+        // Specular rim: bright top-left and bottom-right, faint in between
+        rimShader = new LinearGradient(body.left, body.top, body.right, body.bottom,
+                new int[] {0xffffffff, 0xccffffff, 0x2effffff, 0xb3ffffff, 0xf2ffffff},
+                new float[] {0f, 0.18f, 0.5f, 0.82f, 1f}, Shader.TileMode.CLAMP);
     }
+
+    // ------------------------------------------------------------------ drawing
 
     @Override
     public void draw(Canvas canvas) {
-        if (body.isEmpty() || bodyShader == null) {
+        if (body.isEmpty() || tintShader == null) {
             return;
         }
+        int save = canvas.save();
+        canvas.scale(spring, spring, body.centerX(), body.centerY());
 
-        // Soft drop shadow: two stacked translucent shapes
+        // Soft diffuse shadow: stacked translucent shapes that fade outwards
         if (shadow) {
             paint.setShader(null);
             paint.setStyle(Paint.Style.FILL);
-
-            paint.setColor(0x1f000000);
-            tmp.set(body);
-            tmp.inset(-1f * dp, -1f * dp);
-            tmp.offset(0f, 1.5f * dp);
-            canvas.drawRoundRect(tmp, radius + dp, radius + dp, paint);
-
-            paint.setColor(0x2e000000);
-            tmp.set(body);
-            tmp.offset(0f, 1f * dp);
-            canvas.drawRoundRect(tmp, radius, radius, paint);
+            paint.setColor(0x13001018);
+            for (int i = 4; i >= 0; i--) {
+                float grow = (i * 1.6f + 0.5f) * dp;
+                tmp.set(body.left - grow, body.top - grow + 2.2f * dp, body.right + grow, body.bottom + grow + 2.2f * dp);
+                canvas.drawRoundRect(tmp, radius + grow, radius + grow, paint);
+            }
         }
 
-        // Tinted body
+        // Glow around the glass when hovered or selected
+        if (glowAmount > 0.01f) {
+            paint.setShader(null);
+            paint.setStyle(Paint.Style.FILL);
+            for (int i = 3; i >= 0; i--) {
+                float grow = (1.5f + i * 1.4f) * dp;
+                paint.setColor(AeroColors.withAlpha(AeroColors.lighter(tint, 1.6f), (0.12f - i * 0.025f) * glowAmount));
+                tmp.set(body.left - grow, body.top - grow, body.right + grow, body.bottom + grow);
+                canvas.drawRoundRect(tmp, radius + grow, radius + grow, paint);
+            }
+        }
+
+        drawBackdrop(canvas);
+
+        // Tint
         paint.setStyle(Paint.Style.FILL);
-        paint.setShader(bodyShader);
+        paint.setShader(tintShader);
         canvas.drawRoundRect(body, radius, radius, paint);
 
-        // Glow
-        paint.setShader(glowShader);
-        canvas.drawRoundRect(glow, innerRadius, innerRadius, paint);
-
-        // Gloss, slightly stronger on opaque glass
-        paint.setShader(glossShader);
-        paint.setAlpha(Math.round(255f * Math.min(1f, 0.55f + 0.45f * density)));
-        canvas.drawRoundRect(gloss, innerRadius, innerRadius, paint);
+        // Sheen
+        paint.setShader(sheenShader);
+        paint.setAlpha(Math.round(255f * (0.5f + 0.5f * density)));
+        canvas.drawRoundRect(body, radius, radius, paint);
         paint.setAlpha(255);
         paint.setShader(null);
 
-        // Pressed state darkens the whole surface
+        // Inner glow: nested hairlines that fade towards the centre
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(1.5f * dp);
+        for (int i = 0; i < 3; i++) {
+            float off = (1f + i * 1.5f) * dp;
+            tmp.set(body.left + off, body.top + off, body.right - off, body.bottom - off);
+            if (tmp.width() <= 0 || tmp.height() <= 0) {
+                break;
+            }
+            paint.setColor(AeroColors.withAlpha(0xffffffff, 0.11f - i * 0.035f));
+            float r = Math.max(0f, radius - off);
+            canvas.drawRoundRect(tmp, r, r, paint);
+        }
+
+        // Pressed: dim softly
         if (pressed) {
-            paint.setColor(0x40000000);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(0x33000a14);
             canvas.drawRoundRect(body, radius, radius, paint);
         }
 
-        // Rim
-        float rimWidth = (focused ? 2f : 1f) * dp;
+        // Specular rim
+        float rimWidth = (focused ? 2f : 1.5f) * dp;
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(rimWidth);
-        paint.setColor(focused ? 0xffffffff : 0x8cffffff);
+        paint.setShader(rimShader);
+        paint.setAlpha(Math.round(255f * (focused ? 1f : (0.72f + 0.2f * glowAmount))));
         tmp.set(body);
         tmp.inset(rimWidth / 2f, rimWidth / 2f);
-        canvas.drawRoundRect(tmp, Math.max(0f, radius - rimWidth / 2f), Math.max(0f, radius - rimWidth / 2f), paint);
-
-        // Selection ring for keyboard / gamepad / TV-remote navigation
-        if (focused) {
-            float ringWidth = 3f * dp;
-            Rect b = getBounds();
-            paint.setStrokeWidth(ringWidth);
-            paint.setColor(AeroColors.withAlpha(AeroColors.lighter(tint, 1.5f), 0.85f));
-            tmp.set(b.left + ringWidth / 2f, b.top + ringWidth / 2f, b.right - ringWidth / 2f, b.bottom - ringWidth / 2f);
-            float ringRadius = radius + (body.left - tmp.left);
-            canvas.drawRoundRect(tmp, ringRadius, ringRadius, paint);
-        }
-
+        float rr = Math.max(0f, radius - rimWidth / 2f);
+        canvas.drawRoundRect(tmp, rr, rr, paint);
+        paint.setAlpha(255);
+        paint.setShader(null);
         paint.setStyle(Paint.Style.FILL);
+
+        canvas.restoreToCount(save);
+    }
+
+    /** Draws the part of the blurred background that sits behind this view, clipped to the glass shape. */
+    private void drawBackdrop(Canvas canvas) {
+        Bitmap backdrop = blur ? AeroBackdrop.bitmap() : null;
+        if (backdrop == null) {
+            return;
+        }
+        Callback callback = getCallback();
+        if (!(callback instanceof View)) {
+            return;
+        }
+        View view = (View) callback;
+        view.getLocationInWindow(location);
+        float wx = AeroBackdrop.windowWidth();
+        float wy = AeroBackdrop.windowHeight();
+        float sx = backdrop.getWidth() / wx;
+        float sy = backdrop.getHeight() / wy;
+        // Account for the spring scale: the view is drawn scaled around the centre of the body
+        float left = location[0] + (body.left - getBounds().left);
+        float top = location[1] + (body.top - getBounds().top);
+        srcRect.set(Math.round(left * sx), Math.round(top * sy),
+                Math.round((left + body.width()) * sx), Math.round((top + body.height()) * sy));
+        if (srcRect.width() < 1 || srcRect.height() < 1) {
+            return;
+        }
+        int save = canvas.save();
+        clip.reset();
+        clip.addRoundRect(body, radius, radius, Path.Direction.CW);
+        canvas.clipPath(clip);
+        canvas.drawBitmap(backdrop, srcRect, body, bitmapPaint);
+        canvas.restoreToCount(save);
     }
 
     @Override

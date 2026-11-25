@@ -32,3 +32,23 @@ adb install -r app/build/outputs/apk/nonRoot/debug/app-nonRoot-debug.apk
 Recursos compilados con `aapt`, paquete `com.limelight.aero` compilado sin avisos y sin errores nuevos
 en los archivos modificados. No se ha ejecutado en un dispositivo: pendiente de prueba visual (táctil y mando/TV).
 Los diálogos del sistema conservan el estilo Material estándar.
+
+## Liquid glass and wallpaper (v2)
+
+**Liquid glass.** Tiles, toolbar orbs and the settings pane now show a *blurred copy of the background*
+through a generously rounded, softly tinted pane, with a specular rim (bright top-left / bottom-right,
+faint along the sides), a soft sheen with no hard gloss band, an inner glow, diffuse shadow and a glow
+for hover / selection. The glass is springy: it grows slightly when hovered or selected (TV remote,
+keyboard, mouse) and squashes when pressed, then settles with a small overshoot. Settings → Appearance →
+**Glass blur** (0–100 %) controls the frost; 0 gives plain translucent glass. The blur is a tiny
+(~190 px) pre-blurred render of the background, so it works on every Android version (no RenderEffect /
+RenderScript) and costs almost nothing per tile.
+
+**Wallpaper.** Settings → Appearance → *Wallpaper (image, GIF or video)* opens the system file picker
+(any image or video). It replaces the sky, is cropped to fill the screen and can be dimmed (0–80 %).
+GIF / animated WebP animate on Android 9+ (older versions show the first frame); videos loop silently.
+It pauses whenever the window loses focus (so it is idle while streaming) and falls back to the sky if
+the file cannot be read. The glass blur uses the wallpaper's first frame. *Remove wallpaper* goes back to
+the sky. Access to the chosen file is kept with a persistable URI permission.
+
+New preference keys: `seekbar_aero_blur`, `edit_aero_wallpaper`, `seekbar_aero_wallpaper_dim`.

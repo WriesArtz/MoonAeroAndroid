@@ -267,6 +267,41 @@
             android:summary="@string/summary_aero_glass"
             android:text="@string/suffix_aero_glass"
             android:title="@string/title_aero_glass" />
+        <com.limelight.preferences.SeekBarPreference
+            android:key="seekbar_aero_blur"
+            android:dependency="checkbox_aero_enabled"
+            android:dialogMessage="@string/summary_aero_blur"
+            seekbar:min="0"
+            seekbar:step="5"
+            seekbar:keyStep="5"
+            android:max="100"
+            android:defaultValue="60"
+            android:summary="@string/summary_aero_blur"
+            android:text="@string/suffix_aero_glass"
+            android:title="@string/title_aero_blur" />
+        <Preference
+            android:key="pref_aero_wallpaper"
+            android:dependency="checkbox_aero_enabled"
+            android:persistent="false"
+            android:title="@string/title_aero_wallpaper"
+            android:summary="@string/summary_aero_wallpaper_none" />
+        <Preference
+            android:key="pref_aero_wallpaper_clear"
+            android:dependency="checkbox_aero_enabled"
+            android:persistent="false"
+            android:title="@string/title_aero_wallpaper_clear" />
+        <com.limelight.preferences.SeekBarPreference
+            android:key="seekbar_aero_wallpaper_dim"
+            android:dependency="checkbox_aero_enabled"
+            android:dialogMessage="@string/summary_aero_wallpaper_dim"
+            seekbar:min="0"
+            seekbar:step="5"
+            seekbar:keyStep="5"
+            android:max="80"
+            android:defaultValue="25"
+            android:summary="@string/summary_aero_wallpaper_dim"
+            android:text="@string/suffix_aero_glass"
+            android:title="@string/title_aero_wallpaper_dim" />
         <CheckBoxPreference
             android:key="checkbox_aero_bubbles"
             android:dependency="checkbox_aero_enabled"

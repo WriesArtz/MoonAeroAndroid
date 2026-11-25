@@ -1,10 +1,12 @@
 package com.limelight.preferences;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.media.MediaCodecInfo;
 import android.os.Build;
 import android.os.Bundle;
@@ -303,7 +305,77 @@ public class StreamSettings extends Activity {
                     .unregisterOnSharedPreferenceChangeListener(aeroListener);
         }
 
+        private static final int REQUEST_AERO_WALLPAPER = 4711;
+
+        private void updateWallpaperPreference() {
+            Preference choose = findPreference("pref_aero_wallpaper");
+            Preference clear = findPreference("pref_aero_wallpaper_clear");
+            if (choose == null || clear == null) {
+                return;
+            }
+            String current = PreferenceManager.getDefaultSharedPreferences(getActivity())
+                    .getString(AeroPalette.PREF_WALLPAPER, "");
+            choose.setSummary(current.isEmpty() ? R.string.summary_aero_wallpaper_none
+                                                : R.string.summary_aero_wallpaper_set);
+            clear.setEnabled(!current.isEmpty());
+        }
+
+        private void setupAeroWallpaper() {
+            Preference choose = findPreference("pref_aero_wallpaper");
+            Preference clear = findPreference("pref_aero_wallpaper_clear");
+            if (choose == null || clear == null) {
+                return;
+            }
+            choose.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("*/*");
+                    intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {"image/*", "video/*"});
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                    try {
+                        startActivityForResult(intent, REQUEST_AERO_WALLPAPER);
+                    } catch (ActivityNotFoundException e) {
+                        Toast.makeText(getActivity(), R.string.toast_aero_wallpaper_failed, Toast.LENGTH_LONG).show();
+                    }
+                    return true;
+                }
+            });
+            clear.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    PreferenceManager.getDefaultSharedPreferences(getActivity()).edit()
+                            .remove(AeroPalette.PREF_WALLPAPER).apply();
+                    updateWallpaperPreference();
+                    return true;
+                }
+            });
+            updateWallpaperPreference();
+        }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+            if (requestCode != REQUEST_AERO_WALLPAPER || resultCode != Activity.RESULT_OK
+                    || data == null || data.getData() == null) {
+                return;
+            }
+            Uri uri = data.getData();
+            try {
+                // Keep access to the file across restarts (not every provider supports this)
+                getActivity().getContentResolver().takePersistableUriPermission(
+                        uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (Exception ignored) {
+            }
+            PreferenceManager.getDefaultSharedPreferences(getActivity()).edit()
+                    .putString(AeroPalette.PREF_WALLPAPER, uri.toString()).apply();
+            updateWallpaperPreference();
+        }
+
         private void setupAeroPreferences() {
+            setupAeroWallpaper();
             final ListPreference preset = (ListPreference) findPreference(AeroPalette.PREF_PRESET);
             final ListPreference swatch = (ListPreference) findPreference("list_aero_swatch");
             final EditTextPreference hex = (EditTextPreference) findPreference(AeroPalette.PREF_COLOR);

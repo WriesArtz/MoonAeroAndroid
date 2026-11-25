@@ -332,6 +332,15 @@
     <string name="title_aero_glass">Glass opacity</string>
     <string name="summary_aero_glass">How solid the glass panels look. Lower values are clearer</string>
     <string name="suffix_aero_glass">%</string>
+    <string name="title_aero_blur">Glass blur</string>
+    <string name="summary_aero_blur">How frosted the glass looks. 0 gives plain translucent glass</string>
+    <string name="title_aero_wallpaper">Wallpaper (image, GIF or video)</string>
+    <string name="summary_aero_wallpaper_none">None: the Aero sky is used. Tap to pick a file</string>
+    <string name="summary_aero_wallpaper_set">Tap to choose another file</string>
+    <string name="title_aero_wallpaper_clear">Remove wallpaper</string>
+    <string name="title_aero_wallpaper_dim">Wallpaper dimming</string>
+    <string name="summary_aero_wallpaper_dim">Darkens the wallpaper so text stays readable</string>
+    <string name="toast_aero_wallpaper_failed">Could not use that file as a wallpaper</string>
     <string name="title_checkbox_aero_bubbles">Floating bubbles</string>
     <string name="summary_checkbox_aero_bubbles">Animate soap bubbles in the background. They stay still if animations are off in system settings</string>
 </resources>

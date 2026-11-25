@@ -6,7 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.StateListDrawable;
+import android.net.Uri;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,12 +28,12 @@ public final class AeroTheme {
     private AeroTheme() {}
 
     // Layout constants, in dp
-    private static final float PC_TILE_RADIUS = 18f;
-    private static final float APP_TILE_RADIUS = 12f;
-    private static final float TILE_INSET = 5f;       // room for the shadow and focus ring
-    private static final float ORB_INSET = 4f;
+    private static final float PC_TILE_RADIUS = 26f;
+    private static final float APP_TILE_RADIUS = 20f;
+    private static final float TILE_INSET = 7f;       // room for the shadow, glow and spring overshoot
+    private static final float ORB_INSET = 6f;
     private static final float ORB_ICON_PADDING = 13f;
-    private static final float PANE_RADIUS = 16f;
+    private static final float PANE_RADIUS = 24f;
 
     private static final int[] ORB_BUTTON_IDS = {
             R.id.settingsButton, R.id.helpButton, R.id.manuallyAddPc
@@ -67,6 +67,7 @@ public final class AeroTheme {
                 decor.setTag(R.id.aero_style_signature, null);
                 decor.setTag(R.id.aero_original_background, null);
                 setBubbles(activity, content, false);
+                setWallpaper(activity, content, null);
                 for (int id : ORB_BUTTON_IDS) {
                     unstyleOrb(activity.findViewById(id));
                 }
@@ -85,7 +86,14 @@ public final class AeroTheme {
             decor.setTag(R.id.aero_style_signature, signature);
         }
 
+        setWallpaper(activity, content, palette);
         setBubbles(activity, content, palette.bubbles);
+        AeroBackdrop.ensure(activity, palette, new Runnable() {
+            @Override
+            public void run() {
+                redrawGlass(decor);
+            }
+        });
 
         for (int id : ORB_BUTTON_IDS) {
             View v = activity.findViewById(id);
@@ -107,6 +115,45 @@ public final class AeroTheme {
             }
         }
         return new ColorDrawable(0xff303030);
+    }
+
+    /** Adds, updates or removes the wallpaper layer (image / GIF / video). It sits behind the bubbles. */
+    private static void setWallpaper(Activity activity, ViewGroup content, AeroPalette palette) {
+        if (content == null) {
+            return;
+        }
+        View existing = content.findViewById(R.id.aero_wallpaper_view);
+        boolean wanted = palette != null && palette.wallpaper.length() > 0;
+        if (!wanted) {
+            if (existing != null) {
+                content.removeView(existing);
+            }
+            return;
+        }
+        AeroWallpaperView view;
+        if (existing instanceof AeroWallpaperView) {
+            view = (AeroWallpaperView) existing;
+        }
+        else {
+            view = new AeroWallpaperView(activity);
+            view.setId(R.id.aero_wallpaper_view);
+            content.addView(view, 0, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        view.setSource(Uri.parse(palette.wallpaper), palette.wallpaperDim);
+    }
+
+    /** Glass views cache their drawing, so ask the themed ones to repaint (the blurred backdrop changed). */
+    private static void redrawGlass(View view) {
+        if (view.getTag(R.id.aero_style_signature) != null) {
+            view.invalidate();
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                redrawGlass(group.getChildAt(i));
+            }
+        }
     }
 
     private static void setBubbles(Activity activity, ViewGroup content, boolean wanted) {
@@ -140,7 +187,7 @@ public final class AeroTheme {
                     button.getPaddingLeft(), button.getPaddingTop(),
                     button.getPaddingRight(), button.getPaddingBottom()});
         }
-        button.setBackground(selector(palette.accent, palette.glass, dp, 0f, ORB_INSET, true, true));
+        button.setBackground(glass(palette.accent, palette, dp, 0f, ORB_INSET, true, true, true));
         int pad = Math.round(ORB_ICON_PADDING * dp);
         button.setPadding(pad, pad, pad, pad);
         button.setTag(R.id.aero_style_signature, signature);
@@ -194,8 +241,8 @@ public final class AeroTheme {
             return;
         }
         float dp = context.getResources().getDisplayMetrics().density;
-        tile.setBackground(selector(palette.accent, palette.glass, dp,
-                largeTile ? PC_TILE_RADIUS : APP_TILE_RADIUS, TILE_INSET, false, true));
+        tile.setBackground(glass(palette.accent, palette, dp,
+                largeTile ? PC_TILE_RADIUS : APP_TILE_RADIUS, TILE_INSET, false, true, true));
         tile.setTag(R.id.aero_style_signature, signature);
     }
 
@@ -206,10 +253,24 @@ public final class AeroTheme {
             if (original == null) {
                 grid.setTag(R.id.aero_original_selector, grid.getSelector());
                 grid.setSelector(new ColorDrawable(Color.TRANSPARENT));
+                // The frosted backdrop depends on where a tile is on screen, so repaint tiles while scrolling
+                grid.setOnScrollListener(new AbsListView.OnScrollListener() {
+                    @Override
+                    public void onScrollStateChanged(AbsListView view, int scrollState) {
+                    }
+
+                    @Override
+                    public void onScroll(AbsListView view, int first, int visible, int total) {
+                        for (int i = 0; i < view.getChildCount(); i++) {
+                            view.getChildAt(i).invalidate();
+                        }
+                    }
+                });
             }
         }
         else if (original instanceof Drawable) {
             grid.setSelector((Drawable) original);
+            grid.setOnScrollListener(null);
             grid.setTag(R.id.aero_original_selector, null);
         }
     }
@@ -244,26 +305,16 @@ public final class AeroTheme {
         }
         float dp = context.getResources().getDisplayMetrics().density;
         pane.setBackground(new AeroGlassDrawable(AeroColors.darker(palette.mid, 1.35f),
-                Math.max(0.6f, palette.glass), dp, PANE_RADIUS, 6f, false, false, false, false, false));
+                Math.max(0.6f, palette.glass), palette.blur > 0f, dp, PANE_RADIUS, 6f, false, false, false));
         pane.setTag(R.id.aero_style_signature, signature);
     }
 
     // ------------------------------------------------------------------ Helpers
 
-    /** Builds the glass background with its pressed / selected / focused / hovered variants. */
-    private static StateListDrawable selector(int tint, float density, float dp, float radiusDp,
-                                              float insetDp, boolean orb, boolean shadow) {
-        StateListDrawable states = new StateListDrawable();
-        states.addState(new int[] {android.R.attr.state_pressed},
-                new AeroGlassDrawable(tint, density, dp, radiusDp, insetDp, orb, shadow, false, true, false));
-        states.addState(new int[] {android.R.attr.state_selected},
-                new AeroGlassDrawable(tint, density, dp, radiusDp, insetDp, orb, shadow, false, false, true));
-        states.addState(new int[] {android.R.attr.state_focused},
-                new AeroGlassDrawable(tint, density, dp, radiusDp, insetDp, orb, shadow, false, false, true));
-        states.addState(new int[] {android.R.attr.state_hovered},
-                new AeroGlassDrawable(tint, density, dp, radiusDp, insetDp, orb, shadow, true, false, false));
-        states.addState(new int[] {},
-                new AeroGlassDrawable(tint, density, dp, radiusDp, insetDp, orb, shadow, false, false, false));
-        return states;
+    /** Builds one glass background; it follows the view state (pressed / selected / focused / hovered) itself. */
+    private static Drawable glass(int tint, AeroPalette palette, float dp, float radiusDp,
+                                  float insetDp, boolean orb, boolean shadow, boolean springy) {
+        return new AeroGlassDrawable(tint, palette.glass, palette.blur > 0f, dp, radiusDp, insetDp,
+                orb, shadow, springy);
     }
 }
