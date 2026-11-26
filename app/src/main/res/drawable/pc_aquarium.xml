@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="150dp"
+    android:height="170dp"
+    android:viewportWidth="150"
+    android:viewportHeight="170">
+    <!-- Translucent aquarium iMac silhouette -->
+    <path android:fillColor="#B8F3FF" android:pathData="M25,15 C16,15 10,23 10,34 L10,118 C10,130 20,138 32,138 L118,138 C131,138 140,130 140,118 L140,34 C140,23 132,15 121,15 Z"/>
+    <path android:fillColor="#28B8D7" android:pathData="M25,19 C18,19 14,25 14,34 L14,115 C14,126 22,133 33,133 L117,133 C128,133 136,126 136,115 L136,34 C136,25 130,19 120,19 Z"/>
+    <path android:fillColor="#51D7EE" android:pathData="M24,28 L126,28 L126,116 Q126,125 117,125 L33,125 Q24,125 24,116 Z"/>
+    <path android:fillColor="#167BA6" android:pathData="M26,31 L124,31 L124,114 Q124,121 116,121 L34,121 Q26,121 26,114 Z"/>
+    <path android:fillColor="#60DDF4" android:pathData="M30,35 L120,35 L120,111 L30,111 Z"/>
+    <path android:fillColor="#DFFBFF" android:pathData="M22,13 L128,13 Q139,17 139,29 L139,116 Q138,130 124,134 L26,134 Q12,130 11,116 L11,29 Q12,17 22,13 Z"/>
+    <path android:fillColor="#26B7D9" android:pathData="M24,25 L126,25 L126,114 Q126,124 116,124 L34,124 Q24,124 24,114 Z"/>
+    <path android:fillColor="#5EDDF1" android:pathData="M29,30 L121,30 L121,110 L29,110 Z"/>
+    <!-- Water, bubbles, aquatic plants -->
+    <path android:fillColor="#147EAA" android:pathData="M29,82 Q47,76 65,82 T101,82 T121,82 L121,110 L29,110 Z"/>
+    <path android:fillColor="#7DE7F7" android:pathData="M36,94 Q44,82 49,92 Q48,101 36,94 Z M106,92 Q112,82 117,91 Q114,100 106,92 Z M55,107 Q63,95 67,105 Q64,113 55,107 Z"/>
+    <path android:fillColor="#FF9D3B" android:pathData="M43,55 Q53,47 63,55 Q53,63 43,55 Z M63,55 L69,49 L69,61 Z"/>
+    <path android:fillColor="#FFCE4D" android:pathData="M84,69 Q94,61 104,69 Q94,77 84,69 Z M104,69 L110,63 L110,75 Z"/>
+    <path android:fillColor="#FF8D46" android:pathData="M73,87 Q81,80 89,87 Q81,94 73,87 Z M89,87 L94,82 L94,92 Z"/>
+    <path android:fillColor="#FFB44A" android:pathData="M43,99 Q50,93 57,99 Q50,105 43,99 Z M57,99 L62,95 L62,103 Z"/>
+    <path android:fillColor="#FF82BB" android:pathData="M49,40 L53,34 L57,40 L63,41 L58,46 L59,52 L53,49 L47,52 L48,46 L43,41 Z M100,42 L104,36 L108,42 L114,43 L109,48 L110,54 L104,51 L98,54 L99,48 L94,43 Z M78,73 L82,67 L86,73 L92,74 L87,79 L88,85 L82,82 L76,85 L77,79 L72,74 Z"/>
+    <path android:fillColor="#42C980" android:pathData="M34,108 L38,97 L42,108 L47,111 L43,112 L40,119 L37,113 L32,112 Z M110,108 L114,97 L118,108 L123,111 L119,112 L116,119 L113,113 L108,112 Z"/>
+    <!-- Rounded silver bezel and chin -->
+    <path android:fillColor="#E9FCFF" android:pathData="M20,125 L130,125 L126,134 Q121,139 113,139 L37,139 Q27,139 23,134 Z"/>
+    <path android:fillColor="#36BBD8" android:pathData="M48,131 L102,131 L102,134 L48,134 Z"/>
+    <!-- Handle -->
+    <path android:fillColor="#7DE7F7" android:pathData="M49,7 Q49,3 55,3 L95,3 Q101,3 101,7 L101,14 L94,14 L94,9 L56,9 L56,14 L49,14 Z"/>
+    <path android:fillColor="#16A5C8" android:pathData="M53,7 L97,7 L97,10 L53,10 Z"/>
+    <!-- speaker dots -->
+    <path android:fillColor="#1687AC" android:pathData="M20,131 L22,131 L22,133 L20,133 Z M27,131 L29,131 L29,133 L27,133 Z M34,131 L36,131 L36,133 L34,133 Z M114,131 L116,131 L116,133 L114,133 Z M121,131 L123,131 L123,133 L121,133 Z"/>
+    <!-- stand -->
+    <path android:fillColor="#C5F4FF" android:pathData="M64,139 L86,139 L91,151 L106,154 L106,160 L44,160 L44,154 L59,151 Z"/>
+    <path android:fillColor="#1688AD" android:pathData="M66,140 L84,140 L88,151 L62,151 Z M48,155 L102,155 L102,158 L48,158 Z"/>
+    <path android:fillColor="#0E7099" android:pathData="M42,160 L108,160 Q112,160 112,164 L112,166 L38,166 L38,164 Q38,160 42,160 Z"/>
+</vector>
