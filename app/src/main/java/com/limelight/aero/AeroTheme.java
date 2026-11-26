@@ -9,7 +9,10 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.TypedValue;
 import android.view.View;
+import android.graphics.Outline;
 import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
+import android.widget.ImageView;
 import android.view.Window;
 import android.widget.AbsListView;
 import android.widget.FrameLayout;
@@ -231,6 +234,9 @@ public final class AeroTheme {
         if (!palette.enabled) {
             if (tagged != null) {
                 tile.setBackground(null);
+                tile.setScaleX(1f);
+                tile.setScaleY(1f);
+                styleArtwork(tile, null, 0f, 0f);
                 tile.setTag(R.id.aero_style_signature, null);
             }
             return;
@@ -241,9 +247,67 @@ public final class AeroTheme {
             return;
         }
         float dp = context.getResources().getDisplayMetrics().density;
+        tile.setScaleX(1f);
+        tile.setScaleY(1f);
         tile.setBackground(glass(palette.accent, palette, dp,
                 largeTile ? PC_TILE_RADIUS : APP_TILE_RADIUS, TILE_INSET, false, true, true));
+        // App tiles are opaque box art: round it and put the glass finish on top of it
+        styleArtwork(tile, largeTile ? null : palette, dp, APP_TILE_RADIUS - 3f);
         tile.setTag(R.id.aero_style_signature, signature);
+    }
+
+    /** Keeps the layout listener and overlay of one tile together so they can be removed again. */
+    private static final class TileOverlay implements View.OnLayoutChangeListener {
+        final View art;
+        final AeroGlossOverlay overlay;
+
+        TileOverlay(View art, AeroGlossOverlay overlay) {
+            this.art = art;
+            this.overlay = overlay;
+        }
+
+        @Override
+        public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
+            overlay.setBounds(art.getLeft(), art.getTop(), art.getRight(), art.getBottom());
+        }
+    }
+
+    /**
+     * Rounds the artwork of an app tile and adds the gloss overlay; with a null palette it undoes both.
+     */
+    private static void styleArtwork(View tile, AeroPalette palette, float dp, final float radiusDp) {
+        Object old = tile.getTag(R.id.aero_tile_overlay);
+        if (old instanceof TileOverlay) {
+            tile.removeOnLayoutChangeListener((TileOverlay) old);
+            tile.getOverlay().remove(((TileOverlay) old).overlay);
+            tile.setTag(R.id.aero_tile_overlay, null);
+        }
+        View art = tile.findViewById(R.id.grid_image);
+        if (!(art instanceof ImageView)) {
+            return;
+        }
+        if (palette == null) {
+            art.setClipToOutline(false);
+            art.setOutlineProvider(ViewOutlineProvider.BACKGROUND);
+            return;
+        }
+        final float radius = radiusDp * dp;
+        art.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radius);
+            }
+        });
+        art.setClipToOutline(true);
+
+        AeroGlossOverlay gloss = new AeroGlossOverlay(palette.accent, radius, dp);
+        TileOverlay holder = new TileOverlay(art, gloss);
+        tile.getOverlay().add(gloss);
+        tile.addOnLayoutChangeListener(holder);
+        tile.setTag(R.id.aero_tile_overlay, holder);
+        if (art.getWidth() > 0) {
+            gloss.setBounds(art.getLeft(), art.getTop(), art.getRight(), art.getBottom());
+        }
     }
 
     /** The stock list selector would paint a grey square under our glass, so hide it while themed. */

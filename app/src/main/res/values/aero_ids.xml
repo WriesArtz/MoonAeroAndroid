@@ -3,6 +3,7 @@
     <!-- Frutiger Aero theme: view ids and tag keys (see com.limelight.aero.AeroTheme) -->
     <item name="aero_bubble_view" type="id" />
     <item name="aero_wallpaper_view" type="id" />
+    <item name="aero_tile_overlay" type="id" />
     <item name="aero_style_signature" type="id" />
     <item name="aero_original_padding" type="id" />
     <item name="aero_original_background" type="id" />

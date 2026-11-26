@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.limelight.PcView;
 import com.limelight.R;
+import com.limelight.aero.AeroPalette;
 import com.limelight.nvstream.http.ComputerDetails;
 import com.limelight.nvstream.http.PairingManager;
 import com.limelight.preferences.PreferenceConfiguration;
@@ -50,7 +51,7 @@ public class PcGridAdapter extends GenericGridAdapter<PcView.ComputerObject> {
 
     @Override
     public void populateView(View parentView, ImageView imgView, ProgressBar prgView, TextView txtView, ImageView overlayView, PcView.ComputerObject obj) {
-        imgView.setImageResource(R.drawable.ic_computer);
+        imgView.setImageResource(AeroPalette.isEnabled(imgView.getContext()) ? R.drawable.ic_computer_aero : R.drawable.ic_computer);
         if (obj.details.state == ComputerDetails.State.ONLINE) {
             imgView.setAlpha(1.0f);
         }

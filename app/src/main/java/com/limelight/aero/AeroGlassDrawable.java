@@ -31,7 +31,7 @@ import android.view.animation.OvershootInterpolator;
  */
 final class AeroGlassDrawable extends Drawable {
     private static final float REST = 1f;
-    private static final float HOVER = 1.035f;
+    private static final float HOVER = 1.04f;
     private static final float PRESS = 0.955f;
 
     private final int tint;
@@ -129,6 +129,12 @@ final class AeroGlassDrawable extends Drawable {
             public void onAnimationUpdate(ValueAnimator a) {
                 float t = (Float) a.getAnimatedValue();
                 spring = fromSpring + (targetSpring - fromSpring) * t;
+                Callback host = getCallback();
+                if (springy && host instanceof View) {
+                    // Scale the whole view so its icon / artwork / text move together with the glass
+                    ((View) host).setScaleX(spring);
+                    ((View) host).setScaleY(spring);
+                }
                 glowAmount = Math.max(0f, Math.min(1f, fromGlow + (targetGlow - fromGlow) * Math.min(1f, t)));
                 invalidateSelf();
             }
@@ -179,9 +185,6 @@ final class AeroGlassDrawable extends Drawable {
         if (body.isEmpty() || tintShader == null) {
             return;
         }
-        int save = canvas.save();
-        canvas.scale(spring, spring, body.centerX(), body.centerY());
-
         // Soft diffuse shadow: stacked translucent shapes that fade outwards
         if (shadow) {
             paint.setShader(null);
@@ -255,7 +258,6 @@ final class AeroGlassDrawable extends Drawable {
         paint.setShader(null);
         paint.setStyle(Paint.Style.FILL);
 
-        canvas.restoreToCount(save);
     }
 
     /** Draws the part of the blurred background that sits behind this view, clipped to the glass shape. */
